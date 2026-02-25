@@ -1,5 +1,5 @@
-const { loadTasks, saveTasks } = require('../storage')
-const { showHelp } = require('../ui/help')
+import { loadTasks, saveTasks } from '../storage.js'
+import { showHelp } from '../ui/help.js'
 
 function remove(args) {
   const id = args[0]
@@ -23,4 +23,4 @@ function remove(args) {
   console.log(`Задача #${numId} успешно удалена`)
 }
 
-module.exports = { remove }
+export { remove }

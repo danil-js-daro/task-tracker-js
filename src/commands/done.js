@@ -1,5 +1,5 @@
-const { loadTasks, saveTasks } = require('../storage')
-const { showHelp } = require('../ui/help')
+import { loadTasks, saveTasks } from '../storage.js'
+import { showHelp } from '../ui/help.js'
 
 function done(args) {
   const id = args[0]
@@ -8,7 +8,7 @@ function done(args) {
   }
   let numId = Number(id)
   if (isNaN(numId)) {
-    console.log('id должен быть числом')
+    console.log('Id должен быть числом')
     return
   }
   const tasks = loadTasks()
@@ -31,4 +31,4 @@ function done(args) {
   console.log(`DONE: #${task.id} ${task.desc}`)
 }
 
-module.exports = { done }
+export { done }

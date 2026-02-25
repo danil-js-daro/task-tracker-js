@@ -1,6 +1,5 @@
-const fs = require('fs')
-const path = require('path')
-const { filePath } = require('./config')
+import fs from 'node:fs'
+import { filePath } from './config.js'
 
 function loadTasks() {
   if (!fs.existsSync(filePath)) {
@@ -29,7 +28,11 @@ function saveTasks(tasks) {
 
   const json = JSON.stringify(tasks, null, 2)
   fs.writeFileSync(filePath, json)
-  console.log('Сохраняем', tasks.length, 'задачи')
+  if (tasks.length >= 2) {
+    console.log('Сохраняем', tasks.length, 'задачи')
+    return
+  }
+  console.log('Сохраняем', tasks.length, 'задачу')
 }
 
-module.exports = { loadTasks, saveTasks }
+export { loadTasks, saveTasks }

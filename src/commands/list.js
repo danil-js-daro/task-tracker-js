@@ -1,4 +1,4 @@
-const { loadTasks } = require('../storage')
+import { loadTasks } from '../storage.js'
 
 function list() {
   const tasks = loadTasks()
@@ -11,4 +11,4 @@ function list() {
   })
 }
 
-module.exports = { list }
+export { list }

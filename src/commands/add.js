@@ -1,4 +1,4 @@
-const { loadTasks, saveTasks } = require('../storage')
+import { loadTasks, saveTasks } from '../storage.js'
 
 function add(args) {
   let desc = args.join(' ').trim()
@@ -33,4 +33,4 @@ function add(args) {
   console.log(`Добавлено: ${newId} ${desc}`)
 }
 
-module.exports = { add }
+export { add }

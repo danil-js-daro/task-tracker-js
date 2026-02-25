@@ -1,8 +1,8 @@
-const { showHelp } = require('./ui/help')
-const { add } = require('./commands/add')
-const { list } = require('./commands/list')
-const { done } = require('./commands/done')
-const { remove } = require('./commands/delete')
+import { showHelp } from './ui/help.js'
+import { add } from './commands/add.js'
+import { list } from './commands/list.js'
+import { done } from './commands/done.js'
+import { remove } from './commands/delete.js'
 
 let action = process.argv[2]
 let args = process.argv.slice(3)
