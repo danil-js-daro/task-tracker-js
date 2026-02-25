@@ -17,10 +17,10 @@ function remove(args) {
   const newTasks = tasks.filter((task) => task.id !== numId)
   if (newTasks.length === tasks.length) {
     console.log(`Задача #${numId} не найдена`)
-  } else {
-    saveTasks(newTasks)
-    console.log(`Задача #${numId} успешно удалена`)
+    return
   }
+  saveTasks(newTasks)
+  console.log(`Задача #${numId} успешно удалена`)
 }
 
 module.exports = { remove }
