@@ -1,0 +1,26 @@
+const { loadTasks, saveTasks } = require('../storage')
+const { showHelp } = require('../ui/help')
+
+function remove(args) {
+  const id = args[0]
+
+  if (!id) {
+    return showHelp()
+  }
+
+  let numId = Number(id)
+  if (isNaN(numId)) {
+    console.log('id должен быть числом')
+    return
+  }
+  const tasks = loadTasks()
+  const newTasks = tasks.filter((task) => task.id !== numId)
+  if (newTasks.length === tasks.length) {
+    console.log(`Задача #${numId} не найдена`)
+  } else {
+    saveTasks(newTasks)
+    console.log(`Задача #${numId} успешно удалена`)
+  }
+}
+
+module.exports = { remove }
