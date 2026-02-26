@@ -1,7 +1,7 @@
-import { loadTasks, saveTasks } from '../storage.js'
 import { showHelp } from '../ui/help.js'
+import { deleteTask } from '../repositories/taskRepo.js'
 
-function remove(args: string[]): void {
+export async function remove(args: string[]): Promise<void> {
   const id = args[0]
 
   if (!id) {
@@ -13,14 +13,11 @@ function remove(args: string[]): void {
     console.log('Id должен быть числом')
     return
   }
-  const tasks = loadTasks()
-  const newTasks = tasks.filter((task) => task.id !== numId)
-  if (newTasks.length === tasks.length) {
+  const ok = await deleteTask(numId)
+  if (!ok) {
     console.log(`Задача #${numId} не найдена`)
     return
   }
-  saveTasks(newTasks)
   console.log(`Задача #${numId} успешно удалена`)
+  return
 }
-
-export { remove }

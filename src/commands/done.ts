@@ -1,32 +1,24 @@
-import { loadTasks, saveTasks } from '../storage.js'
 import { showHelp } from '../ui/help.js'
+import { markDone } from '../repositories/taskRepo.js'
 
-function done(args: string[]): void {
+export async function done(args: string[]): Promise<void> {
   const id = args[0]
   if (!id) {
-    return showHelp()
+    showHelp()
+    return
   }
   const numId = Number(id)
   if (isNaN(numId)) {
     console.log('Id должен быть числом')
     return
   }
-  const tasks = loadTasks()
-  const task = tasks.find((task) => task.id === numId)
+  const task = await markDone(numId)
 
-  if (!task) {
-    console.log('Задача не найдена')
+  if (task === null) {
+    console.log(`Задача #${numId} не найдена`)
     return
   }
 
-  if (task.status === 'DONE') {
-    console.log('Статус уже DONE')
-    return
-  }
-
-  task.status = 'DONE'
-  saveTasks(tasks)
   console.log(`DONE: #${task.id} ${task.desc}`)
+  return
 }
-
-export { done }
