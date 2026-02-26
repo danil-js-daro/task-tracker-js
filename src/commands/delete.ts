@@ -1,16 +1,16 @@
 import { loadTasks, saveTasks } from '../storage.js'
 import { showHelp } from '../ui/help.js'
 
-function remove(args) {
+function remove(args: string[]): void {
   const id = args[0]
 
   if (!id) {
     return showHelp()
   }
 
-  let numId = Number(id)
+  const numId = Number(id)
   if (isNaN(numId)) {
-    console.log('id должен быть числом')
+    console.log('Id должен быть числом')
     return
   }
   const tasks = loadTasks()

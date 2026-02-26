@@ -1,4 +1,4 @@
-function showHelp() {
+function showHelp(): void {
   console.log(`
     Использование:
     node tasks.js add "описание"
