@@ -27,7 +27,8 @@ async function main() {
   try {
     await command(args)
   } catch (err) {
-    console.error('Ошибка:', err)
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('Ошибка:', message)
     process.exit(1)
   }
 }

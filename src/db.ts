@@ -1,8 +1,15 @@
 import { Pool } from 'pg'
 
-const connectionString = process.env.DATABASE_URL
-if (!connectionString) {
-  throw new Error('DATABASE_URL is not set in .env')
-}
+let pool: Pool | null = null
 
-export const pool = new Pool({ connectionString })
+export function getPool(): Pool {
+  if (pool) return pool
+
+  const connectionString = process.env.DATABASE_URL
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is required')
+  }
+
+  pool = new Pool({ connectionString })
+  return pool
+}

@@ -1,10 +1,14 @@
 import 'dotenv/config'
-import { pool } from '../db.js'
-import { getTasks } from '../repositories/taskRepo.js'
+import { getPool } from '../db.js'
 
-async function main() {
-  const tasks = await getTasks()
-  console.log(tasks)
+async function pingDb() {
+  const pool = getPool()
+  const res = await pool.query('SELECT 1 as ok')
+  console.log('DB OK:', res.rows[0]?.ok ?? 1)
+  await pool.end()
 }
 
-main()
+pingDb().catch((err) => {
+  console.error('DB ping failed:', err instanceof Error ? err.message : err)
+  process.exit(1)
+})
