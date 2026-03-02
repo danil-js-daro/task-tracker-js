@@ -1,6 +1,7 @@
 // taskRepo.ts
 import type { Pool } from 'pg'
 import type { Task, TaskStatus } from '../types.js'
+import { AppError, DbError } from '../errors.js'
 
 type TaskRow = {
   id: number
@@ -42,13 +43,20 @@ export class TaskRepository {
     VALUES ($1, 'TODO')
     RETURNING id, description, status, created_at, completed_at
   `
+    try {
+      const result = await this.#pool.query<TaskRow>(sql, [description])
 
-    const result = await this.#pool.query<TaskRow>(sql, [description])
+      const row = result.rows[0]
+      if (!row) throw new DbError('Insert returned no row"')
 
-    const row = result.rows[0]
-    if (!row) throw new Error('Failed to create task')
-
-    return mapRow(row)
+      return mapRow(row)
+    } catch (err) {
+      if (err instanceof DbError) {
+        throw err
+      } else {
+        throw new DbError('Failed to create task')
+      }
+    }
   }
 
   async markDone(id: number): Promise<MarkDoneResult> {
@@ -71,26 +79,41 @@ export class TaskRepository {
   WHERE id = $1
   RETURNING id, description, status, created_at, completed_at
   `
+    try {
+      const result = await this.#pool.query<TaskRow>(sql, [id])
+      const row = result.rows[0]
 
-    const result = await this.#pool.query<TaskRow>(sql, [id])
-    const row = result.rows[0]
+      if (!row) {
+        return { kind: 'not_found' }
+      }
 
-    if (!row) {
-      throw new Error('Failed to update task')
+      const updatedTask = mapRow(row)
+
+      return { kind: 'updated', task: updatedTask }
+    } catch (err) {
+      if (err instanceof DbError) {
+        throw err
+      } else {
+        throw new DbError('Failed to mark task as done')
+      }
     }
-    const updatedTask = mapRow(row)
-
-    return { kind: 'updated', task: updatedTask }
   }
 
   async deleteTask(id: number): Promise<boolean> {
     const sql = `
   DELETE FROM tasks WHERE id = $1
   `
+    try {
+      const result = await this.#pool.query(sql, [id])
 
-    const result = await this.#pool.query(sql, [id])
-
-    return (result.rowCount ?? 0) > 0
+      return (result.rowCount ?? 0) > 0
+    } catch (err) {
+      if (err instanceof DbError) {
+        throw err
+      } else {
+        throw new DbError('Failed to delete task from database')
+      }
+    }
   }
 
   async getTasksByStatus(status?: TaskStatus): Promise<Task[]> {
@@ -99,7 +122,7 @@ export class TaskRepository {
     FROM tasks
     ORDER BY id ASC
     `
-    let param: unknown[] = []
+    let params: Array<string> = []
 
     if (status) {
       sql = `
@@ -108,12 +131,20 @@ export class TaskRepository {
     WHERE status = $1
     ORDER BY id ASC
     `
-      param = [status]
+      params = [status]
     }
 
-    const result = await this.#pool.query<TaskRow>(sql, param)
+    try {
+      const result = await this.#pool.query<TaskRow>(sql, params)
 
-    return result.rows.map(mapRow)
+      return result.rows.map(mapRow)
+    } catch (err) {
+      if (err instanceof DbError) {
+        throw err
+      } else {
+        throw new DbError('Failed to fetch tasks')
+      }
+    }
   }
 
   async getTaskById(id: number): Promise<Task | null> {
@@ -122,14 +153,21 @@ export class TaskRepository {
     FROM tasks
     WHERE id = $1
     `
+    try {
+      const result = await this.#pool.query<TaskRow>(sql, [id])
 
-    const result = await this.#pool.query<TaskRow>(sql, [id])
+      const row = result.rows[0]
 
-    const row = result.rows[0]
-
-    if (!row) {
-      return null
+      if (!row) {
+        return null
+      }
+      return mapRow(row)
+    } catch (err) {
+      if (err instanceof DbError) {
+        throw err
+      } else {
+        throw new DbError('Failed to fetch task by id')
+      }
     }
-    return mapRow(row)
   }
 }

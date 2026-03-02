@@ -3,6 +3,8 @@ import { createPool } from './db.js'
 import { showHelp } from './ui/help.js'
 import { TaskRepository } from './repositories/taskRepo.js'
 import { TaskCommands } from './commands/taskCommand.js'
+import { AppError } from './errors.js'
+import { error } from 'node:console'
 
 const pool = createPool()
 
@@ -32,8 +34,11 @@ async function main() {
   try {
     await handler(args)
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error('Ошибка:', message)
+    if (err instanceof AppError) {
+      console.error(`Ошибка [${err.code}]: ${err.message}`)
+    } else {
+      console.error(`Unexpected error`, err)
+    }
     process.exit(1)
   }
 }
