@@ -1,11 +1,11 @@
 // taskRepo.ts
-import { getPool } from '../db.js'
-import type { Task } from '../types.js'
+import type { Pool } from 'pg'
+import type { Task, TaskStatus } from '../types.js'
 
 type TaskRow = {
   id: number
   description: string
-  status: 'TODO' | 'DONE'
+  status: TaskStatus
   created_at: string | Date
   completed_at: string | Date | null
 }
@@ -30,48 +30,40 @@ function mapRow(row: TaskRow): Task {
   }
 }
 
-export async function getTasks(): Promise<Task[]> {
-  const sql = `
-    SELECT id, description, status, created_at, completed_at
-    FROM tasks
-    ORDER BY id ASC
-  `
+export class TaskRepository {
+  #pool!: Pool
+  constructor(pool: Pool) {
+    this.#pool = pool
+  }
 
-  const pool = getPool()
-  const result = await pool.query<TaskRow>(sql)
-
-  return result.rows.map(mapRow)
-}
-
-export async function createTask(description: string): Promise<Task> {
-  const sql = `
+  async createTask(description: string): Promise<Task> {
+    const sql = `
     INSERT INTO tasks (description, status)
     VALUES ($1, 'TODO')
     RETURNING id, description, status, created_at, completed_at
   `
 
-  const pool = getPool()
-  const result = await pool.query<TaskRow>(sql, [description])
+    const result = await this.#pool.query<TaskRow>(sql, [description])
 
-  const row = result.rows[0]
-  if (!row) throw new Error('Failed to create task')
+    const row = result.rows[0]
+    if (!row) throw new Error('Failed to create task')
 
-  return mapRow(row)
-}
+    return mapRow(row)
+  }
 
-export async function markDone(id: number): Promise<MarkDoneResult> {
-  const existing = await getTaskById(id)
+  async markDone(id: number): Promise<MarkDoneResult> {
+    const existing = await this.getTaskById(id)
 
-  if (existing === null) {
-    return {
-      kind: 'not_found'
+    if (existing === null) {
+      return {
+        kind: 'not_found'
+      }
     }
-  }
-  if (existing.status === 'DONE') {
-    return { kind: 'already_done', task: existing }
-  }
+    if (existing.status === 'DONE') {
+      return { kind: 'already_done', task: existing }
+    }
 
-  const sql = `
+    const sql = `
   UPDATE tasks
   SET
     status = 'DONE',
@@ -80,67 +72,64 @@ export async function markDone(id: number): Promise<MarkDoneResult> {
   RETURNING id, description, status, created_at, completed_at
   `
 
-  const pool = getPool()
-  const result = await pool.query<TaskRow>(sql, [id])
-  const row = result.rows[0]
+    const result = await this.#pool.query<TaskRow>(sql, [id])
+    const row = result.rows[0]
 
-  if (!row) {
-    throw new Error('Failed to update task')
+    if (!row) {
+      throw new Error('Failed to update task')
+    }
+    const updatedTask = mapRow(row)
+
+    return { kind: 'updated', task: updatedTask }
   }
-  const updatedTask = mapRow(row)
 
-  return { kind: 'updated', task: updatedTask }
-}
-
-export async function deleteTask(id: number): Promise<boolean> {
-  const sql = `
+  async deleteTask(id: number): Promise<boolean> {
+    const sql = `
   DELETE FROM tasks WHERE id = $1
   `
 
-  const pool = getPool()
-  const result = await pool.query(sql, [id])
+    const result = await this.#pool.query(sql, [id])
 
-  return result.rowCount === 1
-}
+    return (result.rowCount ?? 0) > 0
+  }
 
-export async function getTasksByStatus(status?: 'TODO' | 'DONE'): Promise<Task[]> {
-  let sql = `
+  async getTasksByStatus(status?: TaskStatus): Promise<Task[]> {
+    let sql = `
   SELECT id, description, status, created_at, completed_at
     FROM tasks
     ORDER BY id ASC
     `
-  let param: Array<string> = []
+    let param: unknown[] = []
 
-  if (status) {
-    sql = `
+    if (status) {
+      sql = `
     SELECT id, description, status, created_at, completed_at
     FROM tasks
     WHERE status = $1
     ORDER BY id ASC
     `
-    param = [status]
+      param = [status]
+    }
+
+    const result = await this.#pool.query<TaskRow>(sql, param)
+
+    return result.rows.map(mapRow)
   }
 
-  const pool = getPool()
-  const result = await pool.query<TaskRow>(sql, param)
-
-  return result.rows.map(mapRow)
-}
-
-export async function getTaskById(id: number): Promise<Task | null> {
-  const sql = `
+  async getTaskById(id: number): Promise<Task | null> {
+    const sql = `
   SELECT id, description, status, created_at, completed_at
     FROM tasks
     WHERE id = $1
     `
 
-  const pool = getPool()
-  const result = await pool.query<TaskRow>(sql, [id])
+    const result = await this.#pool.query<TaskRow>(sql, [id])
 
-  const row = result.rows[0]
+    const row = result.rows[0]
 
-  if (!row) {
-    return null
+    if (!row) {
+      return null
+    }
+    return mapRow(row)
   }
-  return mapRow(row)
 }
