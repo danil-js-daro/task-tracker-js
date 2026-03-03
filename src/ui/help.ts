@@ -1,10 +1,10 @@
 function showHelp(): void {
   console.log(`
     Использование:
-    node tasks.js add "описание"
-    node tasks.js list
-    node tasks.js done <id>
-    node tasks.js delete <id>
+    npm run dev -- add "описание"
+    npm run dev -- list
+    npm run dev -- done <id>
+    npm run dev -- delete <id>
         `)
 }
 

@@ -1,7 +1,7 @@
 // taskRepo.ts
 import type { Pool } from 'pg'
-import type { Task, TaskStatus } from '../types.js'
-import { AppError, DbError } from '../errors.js'
+import type { Task, TaskStatus, MarkDoneResult } from '../types.js'
+import { DbError } from '../errors.js'
 
 type TaskRow = {
   id: number
@@ -10,11 +10,6 @@ type TaskRow = {
   created_at: string | Date
   completed_at: string | Date | null
 }
-
-type MarkDoneResult =
-  | { kind: 'not_found' }
-  | { kind: 'already_done'; task: Task }
-  | { kind: 'updated'; task: Task }
 
 function toIso(value: string | Date): string {
   if (value instanceof Date) return value.toISOString()
@@ -54,7 +49,7 @@ export class TaskRepository {
       if (err instanceof DbError) {
         throw err
       } else {
-        throw new DbError('Failed to create task')
+        throw new DbError('Failed to create task', err)
       }
     }
   }
@@ -94,7 +89,7 @@ export class TaskRepository {
       if (err instanceof DbError) {
         throw err
       } else {
-        throw new DbError('Failed to mark task as done')
+        throw new DbError('Failed to mark task as done', err)
       }
     }
   }
@@ -111,7 +106,7 @@ export class TaskRepository {
       if (err instanceof DbError) {
         throw err
       } else {
-        throw new DbError('Failed to delete task from database')
+        throw new DbError('Failed to delete task from database', err)
       }
     }
   }
@@ -142,7 +137,7 @@ export class TaskRepository {
       if (err instanceof DbError) {
         throw err
       } else {
-        throw new DbError('Failed to fetch tasks')
+        throw new DbError('Failed to fetch tasks', err)
       }
     }
   }
@@ -166,7 +161,7 @@ export class TaskRepository {
       if (err instanceof DbError) {
         throw err
       } else {
-        throw new DbError('Failed to fetch task by id')
+        throw new DbError('Failed to fetch task by id', err)
       }
     }
   }

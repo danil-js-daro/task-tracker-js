@@ -1,13 +1,13 @@
 import { showHelp } from '../ui/help.js'
-import type { TaskRepository } from '../repositories/taskRepo.js'
 import { formatCompleted } from '../ui/formatters.js'
 import { parseId } from '../ui/validators.js'
 import type { TaskStatus } from '../types.js'
+import { TaskService } from '../services/taskService.js'
 
 export class TaskCommands {
-  #repo: TaskRepository
-  constructor(repo: TaskRepository) {
-    this.#repo = repo
+  #service: TaskService
+  constructor(service: TaskService) {
+    this.#service = service
   }
   async add(args: string[]): Promise<void> {
     const description = args.join(' ').trim()
@@ -15,7 +15,7 @@ export class TaskCommands {
       showHelp()
       return
     }
-    const task = await this.#repo.createTask(description)
+    const task = await this.#service.create(description)
     console.log(`Добавлено: ${task.id} ${task.description}`)
   }
 
@@ -25,7 +25,7 @@ export class TaskCommands {
       console.log('Id должен быть положительным числом')
       return
     }
-    const ok = await this.#repo.deleteTask(numId)
+    const ok = await this.#service.delete(numId)
     if (!ok) {
       console.log(`Задача #${numId} не найдена`)
       return
@@ -39,7 +39,7 @@ export class TaskCommands {
       console.log('Id должен быть положительным числом')
       return
     }
-    const res = await this.#repo.markDone(numId)
+    const res = await this.#service.markDone(numId)
 
     switch (res.kind) {
       case 'not_found':
@@ -69,7 +69,7 @@ export class TaskCommands {
       return
     }
 
-    const tasks = await this.#repo.getTasksByStatus(status)
+    const tasks = await this.#service.list(status)
 
     if (tasks.length === 0) {
       console.log('Список пуст')
