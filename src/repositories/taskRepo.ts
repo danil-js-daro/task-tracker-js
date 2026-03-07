@@ -42,7 +42,7 @@ export class TaskRepository {
       const result = await this.#pool.query<TaskRow>(sql, [description])
 
       const row = result.rows[0]
-      if (!row) throw new DbError('Insert returned no row"')
+      if (!row) throw new DbError('Insert returned no row')
 
       return mapRow(row)
     } catch (err) {
@@ -55,42 +55,36 @@ export class TaskRepository {
   }
 
   async markDone(id: number): Promise<MarkDoneResult> {
-    const existing = await this.getTaskById(id)
-
-    if (existing === null) {
-      return {
-        kind: 'not_found'
-      }
-    }
-    if (existing.status === 'DONE') {
-      return { kind: 'already_done', task: existing }
-    }
-
     const sql = `
   UPDATE tasks
   SET
     status = 'DONE',
     completed_at = COALESCE(completed_at, NOW())
-  WHERE id = $1
+  WHERE id = $1 AND status = 'TODO'
   RETURNING id, description, status, created_at, completed_at
   `
     try {
       const result = await this.#pool.query<TaskRow>(sql, [id])
       const row = result.rows[0]
 
-      if (!row) {
-        return { kind: 'not_found' }
+      if (row) {
+        const updatedTask = mapRow(row)
+        return { kind: 'updated', task: updatedTask }
       }
 
-      const updatedTask = mapRow(row)
+      const existing = await this.getTaskById(id)
 
-      return { kind: 'updated', task: updatedTask }
+      if (existing === null) {
+        return {
+          kind: 'not_found'
+        }
+      }
+      return { kind: 'already_done', task: existing }
     } catch (err) {
       if (err instanceof DbError) {
         throw err
-      } else {
-        throw new DbError('Failed to mark task as done', err)
       }
+      throw new DbError('Failed to mark task as done', err)
     }
   }
 

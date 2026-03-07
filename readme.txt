@@ -1,121 +1,91 @@
-📝 Task Tracker
+Task Tracker (TypeScript + PostgreSQL + Fastify)
 
-Небольшой backend-проект на TypeScript с хранением данных в PostgreSQL (через Docker).
+Проект для управления задачами с двумя интерфейсами:
+1. CLI
+2. REST API
 
-Проект реализует полноценный CRUD для задач:
-	•	add
-	•	list (с фильтрацией)
-	•	done
-	•	delete
+Данные хранятся в PostgreSQL, локально удобно запускать через Docker Compose.
 
-🏗 Архитектура разделена на слои
-	•	CLI (commands)
-	•	Repository (работа с БД)
-	•	DB layer (pool)
-	•	UI-форматирование
-	•	Types
+Технологии
+1. Node.js + TypeScript
+2. PostgreSQL (`pg`)
+3. Fastify
+4. Docker Compose
+5. dotenv
 
-⸻
+Функциональность
+1. Создание задачи
+2. Получение списка задач (все / `TODO` / `DONE`)
+3. Завершение задачи (`done`)
+4. Удаление задачи
 
-🚀 Технологии
-	•	Node.js
-	•	TypeScript
-	•	PostgreSQL
-	•	Docker
-	•	dotenv
-	•	Repository pattern
-	•	Discriminated union (для markDone)
+Статусы задач
+1. `TODO`
+2. `DONE`
 
-⸻
+Подготовка
+1. Установить зависимости:
+`npm install`
+2. Поднять базу:
+`docker compose up -d`
+3. Создать `.env` в корне проекта:
+`DATABASE_URL=postgres://tasktracker:tasktracker@localhost:5432/tasktracker`
 
-📦 Установка
+База и схема
+1. Контейнер БД описан в `compose.yml`.
+2. Инициализация таблицы выполняется из `sql/init.sql` при первом старте контейнера с пустым volume.
 
-1. Клонировать проект
-git clone <repo-url>
-cd task-tracker-js
+CLI запуск
+Скрипт:
+`npm run dev:cli -- <command>`
 
-2. Установить зависимости
-npm install
+Команды:
+1. Добавить:
+`npm run dev:cli -- add "Описание задачи"`
+2. Список всех:
+`npm run dev:cli -- list`
+3. Список DONE:
+`npm run dev:cli -- list done`
+4. Список TODO:
+`npm run dev:cli -- list todo`
+5. Завершить:
+`npm run dev:cli -- done 1`
+6. Удалить:
+`npm run dev:cli -- delete 1`
 
-3. Создать .env
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/tasktracker
+REST API запуск
+Скрипт разработки:
+`npm run dev:server`
 
-🐳 Запуск PostgreSQL через Docker
-docker compose up -d
+По умолчанию сервер стартует на порту `3000` (или `PORT` из окружения).
 
-Проверить подключение можно через:
-npx tsx src/scripts/pingDb.ts
+REST API endpoints
+1. `GET /tasks?status=all|todo|done`
+2. `POST /tasks`
+Body:
+`{ "description": "Купить молоко" }`
+3. `POST /tasks/:id/done`
+4. `DELETE /tasks/:id`
 
-🗄 Структура таблицы
-CREATE TABLE tasks (
-  id BIGSERIAL PRIMARY KEY,
-  description TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'TODO',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  completed_at TIMESTAMPTZ
-);
+Примеры curl
+1. Создать задачу:
+`curl -X POST http://localhost:3000/tasks -H "content-type: application/json" -d '{"description":"Купить молоко"}'`
+2. Получить список:
+`curl "http://localhost:3000/tasks?status=all"`
+3. Завершить задачу:
+`curl -X POST http://localhost:3000/tasks/1/done`
+4. Удалить задачу:
+`curl -X DELETE http://localhost:3000/tasks/1`
 
-🖥 CLI команды
-
-➕ Добавить задачу
-npm run dev -- add "Описание задачи"
-
-📋 Список задач
-
-Все задачи:
-npm run dev -- list
-
-Только DONE:
-npm run dev -- list done
-
-Только TODO:
-npm run dev -- list todo
-
-✅ Завершить задачу
-npm run dev -- done <id>
-
-Поведение:
-	•	если не существует → “не найдена”
-	•	если уже DONE → “уже DONE”
-	•	если TODO → обновляется статус + completed_at
-
-❌ Удалить задачу
-npm run dev -- delete <id>
-
-🏗 Архитектура
-src/
-  commands/        # CLI команды
-  repositories/    # SQL логика
-  ui/              # форматирование вывода
-  db.ts            # подключение к БД
-  types.ts         # общие типы
-  tasks.ts         # entry point
-
-  📚 Что реализовано
-	•	TypeScript без any
-	•	PostgreSQL через Docker
-	•	Repository pattern
-	•	Discriminated unions
-	•	completed_at логика с COALESCE
-	•	Разделение слоёв
-	•	Централизованная обработка ошибок
-	•	Форматирование вывода через UI-слой
-
-⸻
-
-🎯 Планы
-	•	REST API поверх текущей логики
-	•	Тестирование через Bruno
-	•	Frontend интерфейс
-
-⸻
-
-🧠 Цель проекта
-
-Проект создан для изучения:
-	•	TypeScript
-	•	PostgreSQL
-	•	Backend архитектуры
-	•	Разделения слоёв
-	•	Async / Await
-	•	Работа с Docker
+Структура проекта
+`src/tasks.ts` - entrypoint CLI  
+`src/server.ts` - entrypoint HTTP API  
+`src/commands/` - обработчики CLI-команд  
+`src/routes/` - HTTP-роуты Fastify  
+`src/services/` - service-слой  
+`src/repositories/` - работа с БД  
+`src/ui/` - валидация/форматирование для CLI и роутов  
+`src/types.ts` - типы домена  
+`src/errors.ts` - доменные ошибки  
+`src/db.ts` - создание пула PostgreSQL  
+`sql/init.sql` - инициализация таблицы `tasks`

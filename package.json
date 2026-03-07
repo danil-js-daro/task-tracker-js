@@ -8,10 +8,11 @@
     "typescript": "^5.9.3"
   },
   "scripts": {
-    "dev": "tsx src/tasks.ts",
     "build": "tsc",
-    "start": "node src/tasks.js",
-    "dev:server": "tsx watch src/server.ts"
+    "dev:cli": "tsx src/tasks.ts",
+    "dev:server": "tsx watch src/server.ts",
+    "start:cli": "node dist/tasks.js",
+    "start:server": "node dist/server.js"
   },
   "dependencies": {
     "dotenv": "^17.3.1",

@@ -49,6 +49,31 @@ async function start() {
 
     registerTaskRoutes(fastify, service)
 
+    let isShuttingDown = false
+
+    async function shutdown(signal: string): Promise<void> {
+      if (isShuttingDown) return
+      isShuttingDown = true
+
+      try {
+        fastify.log.info(`Received ${signal}, shutting down...`)
+
+        await fastify.close()
+        await pool.end()
+        process.exit(0)
+      } catch (err) {
+        fastify.log.error(err)
+        process.exit(1)
+      }
+    }
+
+    process.on('SIGINT', () => {
+      void shutdown('SIGINT')
+    })
+    process.on('SIGTERM', () => {
+      void shutdown('SIGTERM')
+    })
+
     await fastify.listen({
       port: PORT,
       host: '0.0.0.0'
